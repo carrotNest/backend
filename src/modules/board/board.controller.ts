@@ -46,6 +46,7 @@ export class BoardController {
     return await this.boardService.createBoard(createBoardDto, id, image);
   }
 
+  @HttpCode(200)
   @ApiOperation({ summary: '게시물 전체 조회 API', description: '사용자는 본인이 거주하는 동/면/리의 전체 게시글을 최신순으로 조회할 수 있다.'})
   @Get()
   async getAllBoard(
@@ -56,6 +57,7 @@ export class BoardController {
     return await this.boardService.getAllBoard(pageOptionsDto, id);
   }
 
+  @HttpCode(200)
   @ApiOperation({ summary: '사용자는 상세 게시글을 조회한다.' })
   @Get('/:id')
   async getBoard(@Param('id') id: number, @Res() res: Response): Promise<void> {
