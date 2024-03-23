@@ -58,7 +58,7 @@ export class BoardController {
   }
 
   @HttpCode(200)
-  @ApiOperation({ summary: '사용자는 상세 게시글을 조회한다.' })
+  @ApiOperation({ summary: '게시물 상세 조회 API' })
   @Get('/:id')
   async getBoard(@Param('id') id: number, @Res() res: Response): Promise<void> {
     const response = await this.boardService.getBoardDetail(id);
