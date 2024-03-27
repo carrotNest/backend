@@ -14,6 +14,7 @@ import { UserCreateResultInterface } from '../../interfaces/user-create-result.i
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Region } from '../region/entity/region.entity';
+import { UserLoginResultInterface } from 'src/interfaces/user-login-result.interface';
 
 @Injectable()
 export class AuthService {
@@ -82,11 +83,16 @@ export class AuthService {
 
     }
 
-    async loginUser(id: number): Promise<{accessToken: string}> {
+    async loginUser(id: number): Promise<UserLoginResultInterface> {
         const payload: {id: number} = {id};
         const accessToken = this.jwtService.sign(payload, {
             secret: this.configService.get('JWT_SECRET_KEY'),
         });
-        return {accessToken};
+        const user = await this.userRepository.findOne({where: {id: id}, relations: ['region']});
+        const userRegionName = user.region.name;
+        return {
+            accessToken: accessToken,
+            regionName: userRegionName,
+        };
     }
 }
