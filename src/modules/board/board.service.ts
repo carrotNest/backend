@@ -107,14 +107,14 @@ export class BoardService {
 
     const [boards, totalCount] = await this.boardRepository
       .createQueryBuilder('board')
-      .select(['board.id', 'board.stuffName', 'board.status', 'board.imageUrl', 'board.createAt', 'board.deleteAt'])
+      .select(['board.id', 'board.stuffName', 'board.status', 'board.imageUrl', 'board.createAt'])
       .where('board.region_id = :userRegionId', { userRegionId })
       .andWhere('board.deleteAt IS NULL')
       .orderBy('board.id', 'DESC')
       .limit(pageOptionsDto.take)
       .offset(pageOptionsDto.skip)
       .getManyAndCount();
-
+      
     const pageMetaDto = new PageMetaDto({pageOptionsDto, totalCount});
     const lastPage = pageMetaDto.totalPage;
 
