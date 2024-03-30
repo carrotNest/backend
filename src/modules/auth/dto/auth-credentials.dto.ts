@@ -4,11 +4,19 @@ import { Matches } from "class-validator";
 
 export class AuthCredentialsDto {
     
-    @ApiProperty({type: String, description: '로그인 할 아이디', required: true, example: 'yeye2me'})
+    /**
+    * 로그인 할 아이디
+    * @example test123
+    */
+    @ApiProperty({example: 'test111'})
     @IsNotEmptyAndString()
-    accountID!: string;
+    accountId!: string;
 
-    @ApiProperty({type: String, description: '로그인 할 비밀번호', required: true, example: '123abcefg@'})
+    /**
+    * 로그인 할 비밀번호
+    * @example test@123123
+    */
+    @ApiProperty({example: '1234asdf'})
     @IsNotEmptyAndString(6, 15)
     @Matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&.])[A-Za-z\d@$!%*?&.]{6,}$/, {
         message: '비밀번호는 문자, 숫자, 특수문자를 조합해 6~15자 이내로 입력해주세요 ',
