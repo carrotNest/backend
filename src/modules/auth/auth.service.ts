@@ -42,7 +42,7 @@ export class AuthService {
         
         
         // 이메일 유효성체크
-        const isAccountIDExist = await this.userRepository.findOne({where: {accountID:createUserDto.accountID}});
+        const isAccountIDExist = await this.userRepository.findOne({where: {accountId:createUserDto.accountId}});
         if(isAccountIDExist) {
           throw new AccountIdAlreadyExistsException();
         }
@@ -68,8 +68,8 @@ export class AuthService {
     
     // 비밀번호 체크
     async validateUser(authCredentialsDto: AuthCredentialsDto): Promise<{id: number}>{
-        const {accountID, password} = authCredentialsDto;
-        const user = await this.userRepository.findOneBy({accountID});
+        const {accountId, password} = authCredentialsDto;
+        const user = await this.userRepository.findOneBy({accountId});
         if(user){
             const isPasswordMatch = await bcrypt.compare(password, user.password);
             if(isPasswordMatch){
@@ -90,6 +90,7 @@ export class AuthService {
         });
         const user = await this.userRepository.findOne({where: {id: id}, relations: ['region']});
         const userRegionName = user.region.name;
+    
         return {
             accessToken: accessToken,
             regionName: userRegionName,

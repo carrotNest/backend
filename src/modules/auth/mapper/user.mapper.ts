@@ -6,12 +6,12 @@ import { Region } from "src/modules/region/entity/region.entity";
 @Injectable()
 export class UserMapper {
 
-    DtoToEntity({password, accountID, nickname}: CreateUserDto, region: Region): User{
+    DtoToEntity({password, accountId, nickname}: CreateUserDto, region: Region): User{
 
         const user = new User();
 
         user.password = password;
-        user.accountID = accountID;
+        user.accountId = accountId;
         user.nickname = nickname;
         user.region = region;
 

@@ -12,7 +12,7 @@ export class User extends BaseEntity{
     nickname: string;
 
     @Column()
-    accountID: string;
+    accountId: string;
 
     @ManyToOne(type => Region)
     @JoinColumn({name: 'region_id'})
