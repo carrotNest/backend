@@ -33,7 +33,7 @@ export class CreateBoardDto {
   stuffCategory!: StuffCategory;
 
 
-  @ApiProperty({type: String, format: 'binary', description: '첨부할 사진'})
+  @ApiProperty({type: String, format: 'binary', description: '첨부할 사진', example: '4f457e7df2f7242fc74ec4667b4bccb5d0bbab1214a29e381afae56101ded106'})
   @IsOptional()
   image?: Express.Multer.File;
 }
