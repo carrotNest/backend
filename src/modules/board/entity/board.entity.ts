@@ -10,6 +10,8 @@ import { Region } from '../../region/entity/region.entity';
 @Entity()
 export class Board extends BaseEntity {
 
+  // 애초에 manytoone인 컬럼값을 명시적으로 선언하는 게 어떨까? -> 게시물 create 할 때 region_id일단 Null이니까 이 부분 체크
+
   @Column()
   stuffName!: string;
 
@@ -47,4 +49,7 @@ export class Board extends BaseEntity {
 
   @Column({ type: 'int', name: 'region_id', nullable: true })
   regionId: number;
+
+  @Column({ type: 'int', name: 'user_id', nullable: true })
+  userId: number;
 }

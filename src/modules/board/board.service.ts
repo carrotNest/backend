@@ -15,6 +15,7 @@ import { PageOptionsDto } from '../../global/common/dto/page-options.dto';
 import { PaginationResponseDto } from '../../global/common/dto/pagination-response.dto';
 import { PageMetaDto } from '../../global/common/dto/page-meta.dto';
 import { PageNotExists } from '../../global/exception/pageException/PageNotExistsException';
+import { GetBoardDto } from './dto/get-board.dto';
 
 @Injectable()
 export class BoardService {
@@ -23,8 +24,6 @@ export class BoardService {
     private readonly boardRepository: Repository<Board>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @InjectRepository(Comment)
-    private readonly commentRepository: Repository<Comment>,
 
     private readonly boardMapper: BoardMapper,
     private readonly s3Service: S3Service,
@@ -50,54 +49,31 @@ export class BoardService {
     };
   }
 
-  async getBoardDetail(
-    boardId: number,
-  ): Promise<{ board: Board; comments: Comment[]; totalComments: number }> {
+  async getBoardDetail(boardId: number): Promise<GetBoardDto> {
     const board = await this.boardRepository
       .createQueryBuilder('board')
-      .leftJoin('board.creator', 'user')
-      .leftJoin('user.province', 'province')
-      .leftJoin('user.city', 'city')
-      .where('board.id = :id', { id: boardId })
-      .select([
-        'board.id',
+      .select(['board.id',
         'board.stuffName',
-        'board.stuffContent',
-        'board.stuffPrice',
-        'board.stuffCategory',
-        'board.imageUrl',
-        'board.createAt',
-        'board.likesCount',
-        'user.id',
-        'user.nickname',
-        'province.name',
-        'city.name',
+        'board.stuffContent', 
+        'board.stuffCategory', 
+        'board.tradingPlace', 
+        'board.status', 
+        'board.likesCount', 
+        'board.imageUrl', 
+        'creator.nickname',
+        'region.name' 
       ])
+      .innerJoinAndSelect('board.creator', 'creator')
+      .innerJoinAndSelect('board.region', 'region')
+      .where('board.id = :boardId', {boardId})
       .getOne();
 
-    if (!board) {
-      throw new NotFoundBoardException();
-    }
-    const [comments, totalComments] = await this.commentRepository
-      .createQueryBuilder('comment')
-      .leftJoin('comment.creator', 'user')
-      .select([
-        'comment.id',
-        'comment.price',
-        'comment.openChatUrl',
-        'comment.createAt',
-        'user.nickname',
-      ])
-      .where('comment.board.id = :id', { id: boardId })
-      .orderBy('comment.createAt', 'DESC')
-      .limit(6)
-      .getManyAndCount();
+      const userNickname = board.creator.nickname;
+      const regionName = board.region.name;
 
-    return {
-      board,
-      comments,
-      totalComments,
-    };
+      const getBoardDto = new GetBoardDto(board, userNickname, regionName);
+
+      return getBoardDto;
   }
 
   async getAllBoard(pageOptionsDto: PageOptionsDto, id: number):Promise<PaginationResponseDto<Board>>{

@@ -1,15 +1,15 @@
-// import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-// import { City } from "./city.entity";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { City } from "./city.entity";
 
-// @Entity()
-// export class Province {
+@Entity()
+export class Province {
 
-//     @PrimaryGeneratedColumn()
-//     id: number;
+    @PrimaryGeneratedColumn()
+    id: number;
 
-//     @Column()
-//     name: string;
+    @Column()
+    name: string;
 
-//     @OneToMany(type => City, city => city.province_id)
-//     cities: City[];
-// }
+    @OneToMany(type => City, city => city.province_id)
+    cities: City[];
+}

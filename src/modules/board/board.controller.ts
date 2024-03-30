@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
   Param,
+  ParseIntPipe,
   Post,
   Query,
   Res,
@@ -24,6 +25,7 @@ import { UserCreateResultInterface } from '../../interfaces/user-create-result.i
 import { PageOptionsDto } from '../../global/common/dto/page-options.dto';
 import { PaginationResponseDto } from '../../global/common/dto/pagination-response.dto';
 import { Board } from './entity/board.entity';
+import { GetBoardDto } from './dto/get-board.dto';
 @ApiTags('board')
 @UseGuards(UserJwtAuthGuard)
 @Controller('boards')
@@ -60,7 +62,7 @@ export class BoardController {
   @HttpCode(200)
   @ApiOperation({ summary: '게시물 상세 조회 API' })
   @Get('/:id')
-  async getBoard(@Param('id') id: number ): Promise<void> {
+  async getBoard(@Param('id', ParseIntPipe) id: number ): Promise<GetBoardDto> {
     return await this.boardService.getBoardDetail(id);
   }
 
