@@ -17,7 +17,7 @@ import {
 import { Response } from 'express';
 import { BoardService } from './board.service';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserJwtAuthGuard } from '../auth/guards/user-jwt.guard';
 import { UserId } from '../../decorators/user-id.decorator';
@@ -27,6 +27,7 @@ import { PaginationResponseDto } from '../../global/common/dto/pagination-respon
 import { Board } from './entity/board.entity';
 import { GetBoardDto } from './dto/get-board.dto';
 @ApiTags('board')
+@ApiBearerAuth()
 @UseGuards(UserJwtAuthGuard)
 @Controller('boards')
 export class BoardController {
