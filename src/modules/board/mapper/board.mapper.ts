@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateBoardDto } from '../dto/create-board.dto';
 import { Board } from '../entity/board.entity';
-import { CreateBoardResponseDto } from '../dto/board-create-response.dto';
 import { User } from '../../user/entity/user.entity';
 import { Region } from '../../region/entity/region.entity';
 
@@ -31,18 +30,5 @@ export class BoardMapper {
     board.region = region;
 
     return board;
-  }
-
-  EntityToDto(board: Board): CreateBoardResponseDto {
-    return {
-      id: board.id,
-      stuffName: board.stuffName,
-      stuffContent: board.stuffContent,
-      stuffPrice: board.stuffPrice,
-      stuffCategory: board.stuffCategory,
-      creatorId: board.creator.id,
-      imageUrl: board.imageUrl,
-      likesCount: board.likesCount
-    };
   }
 }

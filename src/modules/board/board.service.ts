@@ -70,6 +70,10 @@ export class BoardService {
       .where('board.id = :boardId', {boardId})
       .getOne();
 
+      if(!board){
+        throw new BoardNotFoundException();
+      }
+
       const userNickname = board.creator.nickname;
       const regionName = board.region.name;
 
