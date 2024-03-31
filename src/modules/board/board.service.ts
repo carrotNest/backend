@@ -4,9 +4,6 @@ import { Repository } from 'typeorm';
 import { Board } from './entity/board.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/entity/user.entity';
-import { NotFoundUserException } from '../auth/authException/NotFoundUserException';
-import { NotFoundBoardException } from './boardException/NotFoundBoardException';
-import { Comment } from '../comment/entity/comment.entity';
 import { S3Service } from '../../config/s3/s3.service';
 import { RedisService } from '../../config/redis/redis.service';
 import { BoardMapper } from './mapper/board.mapper';
@@ -14,8 +11,12 @@ import { UserCreateResultInterface } from '../../interfaces/user-create-result.i
 import { PageOptionsDto } from '../../global/common/dto/page-options.dto';
 import { PaginationResponseDto } from '../../global/common/dto/pagination-response.dto';
 import { PageMetaDto } from '../../global/common/dto/page-meta.dto';
-import { PageNotExists } from '../../global/exception/pageException/PageNotExistsException';
+import { PageNotExists } from '../../global/exception/pageException/Page-Not-Exists-Exception';
 import { GetBoardDto } from './dto/get-board.dto';
+import { BoardStatus } from '../../types/enums/boardStatus.enum';
+import { BoardNotFoundException } from './boardException/Board-Not-Found-Exception';
+import { UserNotFoundException } from '../auth/authException/User-Not-Found-Exception';
+import { BoardStatusForbiddenException } from './boardException/Board-Status-Forbidden-Exception';
 
 @Injectable()
 export class BoardService {
@@ -49,6 +50,7 @@ export class BoardService {
     };
   }
 
+  // 게시물 없으면 예외처리 해야함
   async getBoardDetail(boardId: number): Promise<GetBoardDto> {
     const board = await this.boardRepository
       .createQueryBuilder('board')
@@ -98,18 +100,37 @@ export class BoardService {
       return new PaginationResponseDto(boards, pageMetaDto);
     }else{
       throw new PageNotExists();
-    }
-    
+    } 
   }
+
+  async updateBoardStatus(boardId: number, userId: number, status: BoardStatus):Promise<GetBoardDto>{
+
+    const board = await this.boardRepository.findOne({where: {id: boardId}, relations: ['creator', 'region']});
+    const boardCreatorId = board.userId;
+
+    if(userId !== boardCreatorId){
+      throw new BoardStatusForbiddenException();
+    }
+
+    board.status = status;
+    await this.boardRepository.save(board);
+
+    const userNickname = board.creator.nickname;
+    const regionName = board.region.name;
+    const updateBoard = new GetBoardDto(board, userNickname, regionName);
+
+    return updateBoard;
+  }
+
 
   async updateBoardLikes(boardId: number, userId: number): Promise<{board: Board; isUserChecked: Boolean}>{
     const isBoardExist = await this.boardRepository.findOne({where: {id: boardId}});
     if(!isBoardExist){
-      throw new NotFoundBoardException();
+      throw new BoardNotFoundException();
     }
     const isUserExist = await this.userRepository.findOne({where:{id: userId}});
     if(!isUserExist){
-      throw new NotFoundUserException();
+      throw new UserNotFoundException();
     }
 
     //게시물 좋아요 key, 유저가 해당 게시물에 좋아요 여부 key생성 -> redis가 게시물의 좋아요와 유저의 중복체크를 확인해줌

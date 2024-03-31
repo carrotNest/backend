@@ -4,17 +4,17 @@ import { User } from '../user/entity/user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserMapper } from './mapper/user.mapper';
-import { AccountIdAlreadyExistsException } from './authException/AccountIdAlreadyExistsException';
-import { NicknameAlreadyExistsException } from './authException/NicknameAlreadyExistsException';
+import { AccountIdAlreadyExistsException } from './authException/AccountId-Already-Exists-Exception';
+import { NicknameAlreadyExistsException } from './authException/Nickname-Already-Exists-Exception';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
-import { NotFoundUserException } from './authException/NotFoundUserException';
-import { LoginInvalidPasswordException } from './authException/LoginInvalidPasswordException';
+import { LoginInvalidPasswordException } from './authException/Login-Invalid-Password-Exception';
 import * as bcrypt from 'bcrypt';
 import { UserCreateResultInterface } from '../../interfaces/user-create-result.interface';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Region } from '../region/entity/region.entity';
 import { UserLoginResultInterface } from 'src/interfaces/user-login-result.interface';
+import { UserNotFoundException } from './authException/User-Not-Found-Exception';
 
 @Injectable()
 export class AuthService {
@@ -78,7 +78,7 @@ export class AuthService {
                 throw new LoginInvalidPasswordException();
             }
         }else{
-            throw new NotFoundUserException();
+            throw new UserNotFoundException();
         }
 
     }
