@@ -47,7 +47,4 @@ export class Board extends BaseEntity {
   @ManyToOne((type) => Region)
   @JoinColumn({name: 'region_id' })
   region: Region;
-
-  @OneToMany((type) => Comment, (comment) => comment.board)
-  comments: Comment[];
 }

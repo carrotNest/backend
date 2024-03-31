@@ -15,7 +15,7 @@ export class Comment extends BaseEntity {
     @Column()
     content: string;
 
-    @ManyToOne(type => Board, board => board.comments)
+    @ManyToOne(type => Board)
     @JoinColumn({name: 'board_id'})
     board: Board;
 
