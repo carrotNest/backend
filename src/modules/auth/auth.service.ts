@@ -15,6 +15,8 @@ import { ConfigService } from '@nestjs/config';
 import { Region } from '../region/entity/region.entity';
 import { UserLoginResultInterface } from 'src/interfaces/user-login-result.interface';
 import { UserNotFoundException } from './authException/User-Not-Found-Exception';
+import { ParentRegionNotFoundException } from './authException/ParentRegion-Not-Found-Exception';
+import { RegionNotFoundException } from './authException/Region-Not-Found-Exception';
 
 @Injectable()
 export class AuthService {
@@ -35,10 +37,17 @@ export class AuthService {
 
         // 동/면/리 같을 경우 상위 지역으로 중복 방지 
         const parentRegion = await this.regionRepository.findOne({where: {name: createUserDto.region.parentRegionName}});
+        if(!parentRegion){
+            throw new ParentRegionNotFoundException();
+        }
+
         const region = await this.regionRepository.findOne({where: {
             name: createUserDto.region.RegionName,
             parent: parentRegion
         }});
+        if(!region){
+            throw new RegionNotFoundException();
+        }
         
         
         // 이메일 유효성체크
