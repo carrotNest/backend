@@ -10,6 +10,8 @@ export enum ErrorCode {
 
     //Board
     BOARD_NOT_FOUND = 'B001',
+    BOARD_STATUS_NOT_FOUND = 'B002',
+    BOARD_STATUS_FORBIDDEN = 'B003',
     
     //pagination
     PAGE_NOT_EXIST = 'P001',

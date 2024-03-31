@@ -7,6 +7,7 @@ import {
   Logger,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   Res,
@@ -26,6 +27,9 @@ import { PageOptionsDto } from '../../global/common/dto/page-options.dto';
 import { PaginationResponseDto } from '../../global/common/dto/pagination-response.dto';
 import { Board } from './entity/board.entity';
 import { GetBoardDto } from './dto/get-board.dto';
+import { BoardStatus } from '../../types/enums/boardStatus.enum';
+import { BoardStatusValidationPipe } from '../../pipes/board-status-validation.pipe';
+
 @ApiTags('board')
 @ApiBearerAuth()
 @UseGuards(UserJwtAuthGuard)
@@ -65,6 +69,17 @@ export class BoardController {
   @Get('/:id')
   async getBoard(@Param('id', ParseIntPipe) id: number ): Promise<GetBoardDto> {
     return await this.boardService.getBoardDetail(id);
+  }
+
+  @HttpCode(200)
+  @ApiOperation({ summary: '게시물 상태 변경 API', description: '게시물을 생성한 사용자는 게시물의 판매중/판매완료 여부를 설정할 수 있다.'})
+  @Patch('/:id/status')
+  async updateBoardStatus(
+    @Param('id', ParseIntPipe) boardId: number,
+    @UserId() userId: number,
+    @Body('status', BoardStatusValidationPipe) status: BoardStatus
+    ): Promise<GetBoardDto>{
+      return await this.boardService.updateBoardStatus(boardId, userId, status);
   }
 
    @Post('/:boardId/likes')
