@@ -10,10 +10,10 @@ import { Region } from '../../region/entity/region.entity';
 @Entity()
 export class Board extends BaseEntity {
 
-  @Column({ type: 'int', name: 'region_id', nullable: true })
+  @Column({ type: 'int', name: 'region_id'})
   regionId: number;
 
-  @Column({ type: 'int', name: 'user_id', nullable: true })
+  @Column({ type: 'int', name: 'user_id'})
   userId: number;
 
   @Column()
