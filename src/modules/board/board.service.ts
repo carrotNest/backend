@@ -50,7 +50,6 @@ export class BoardService {
     };
   }
 
-  // 게시물 없으면 예외처리 해야함
   async getBoardDetail(boardId: number): Promise<GetBoardDto> {
     const board = await this.boardRepository
       .createQueryBuilder('board')
