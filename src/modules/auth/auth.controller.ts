@@ -7,6 +7,7 @@ import { UserCreateResultInterface } from '../../interfaces/user-create-result.i
 import { UserId } from '../../decorators/user-id.decorator';
 import { UserLocalAuthGuard } from './guards/user-local.auth.guard';
 import { Response } from 'express';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 
 @ApiTags('auth')
@@ -43,6 +44,20 @@ export class AuthController {
         res.status(201).json({
             message: '로그인 성공',
             regionName: regionName
+        });
+    }
+
+    @Post('/refresh')
+    async refreshToken(
+        @Body() refreshTokenDto: RefreshTokenDto,
+        @Res() res: Response
+    ): Promise<void>{
+        const {newAccessToken} = await this.authService.refreshToken(refreshTokenDto);
+
+        res.cookie('newAccessToken', newAccessToken, {httpOnly: true});
+
+        res.status(201).json({
+            message: 'accessToken 갱신 성공'
         });
     }
 }

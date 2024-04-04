@@ -18,6 +18,9 @@ import { UserNotFoundException } from './authException/User-Not-Found-Exception'
 import { ParentRegionNotFoundException } from './authException/ParentRegion-Not-Found-Exception';
 import { RegionNotFoundException } from './authException/Region-Not-Found-Exception';
 import { RefreshTokenService } from '../../config/redis/refresh-token.service';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { RefreshTokenInvalidException } from './authException/RefreshToken-Invalid-Exception';
+import { RefreshTokenExpiredException } from './authException/RefreshToken-Expired-Exception';
 
 @Injectable()
 export class AuthService {
@@ -99,6 +102,7 @@ export class AuthService {
 
         const accessToken = this.jwtService.sign(payload, {
             secret: this.configService.get('JWT_SECRET_KEY'),
+            expiresIn: this.configService.get('JWT_EXPIRATION')
         });
         const refreshToken = this.jwtService.sign(payload, {
             secret: this.configService.get('JWT_REFRESH_SECRET_KEY'),
@@ -117,5 +121,35 @@ export class AuthService {
             refreshToken: refreshToken,
             regionName: userRegionName,
         };
+    }
+
+    async refreshToken(refreshTokenDto: RefreshTokenDto){
+        const {refreshToken} = refreshTokenDto;
+
+        // refreshToken의 유효성 검증
+        const payload = this.jwtService.verify(refreshToken, {
+            secret: this.configService.get('JWT_REFRESH_SECRET_KEY')
+        });
+
+        // dto의 refreshToken과 redis의 refreshToken을 비교
+        const userId = payload.id;
+        const storedRefreshToken = await this.refreshTokenService.getKey(`refreshToken:${userId}`);
+
+        // redis에 refreshToken이 없다면 다시 로그인하도록 에러처리
+        if(storedRefreshToken === null){
+            throw new RefreshTokenExpiredException();
+        }
+
+        // 같다면 새로운 accessToken + refreshToken 발급 
+        if(storedRefreshToken === refreshToken){
+            const newPayload = {id: userId};
+            const newAccessToken = this.jwtService.sign(newPayload, {
+                secret: this.configService.get('JWT_SECRET_KEY'),
+                expiresIn: this.configService.get('JWT_EXPIRATION')
+            });
+            return {newAccessToken};     
+        }else{
+            throw new RefreshTokenInvalidException();
+        }
     }
 }
