@@ -8,6 +8,10 @@ export enum ErrorCode {
     USER_INVALID_PROVINCE = 'U005',
     USER_INVALID_CITY = 'U006',
 
+    // Refresh Token(JWT)
+    REFRESH_TOKEN_INVALID = 'JWT001',
+    REFRESH_TOKEN_EXPIRED = 'JWT002',
+
     //Region
     PARENT_REGION_NOT_FOUND = 'R001',
     REGION_NOT_FOUND = 'R002',
