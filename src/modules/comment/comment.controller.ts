@@ -1,12 +1,13 @@
-import { Body, Controller, Get, HttpStatus, Logger, Post, Query, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post, Query, UseGuards } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateCommentDto } from './dto/create-comment.dto';
-import { Response } from 'express';
-import { CommentPaginationRequestDto } from './dto/commet-pagination-request.dto';
 import { UserId } from '../../decorators/user-id.decorator';
 import { UserCreateResultInterface } from '../../interfaces/user-create-result.interface';
 import { UserJwtAuthGuard } from '../auth/guards/user-jwt.guard';
+import { CommentCursorOptionsDto } from './dto/commet-cursor-options.dto';
+import { PaginationResponseDto } from 'src/global/common/dto/pagination-response.dto';
+import { Comment } from './entity/comment.entity';
 
 @ApiTags('comment')
 @UseGuards(UserJwtAuthGuard)
@@ -31,10 +32,8 @@ export class CommentController {
     @ApiOperation({summary: '해당 게시글의 댓글들을 조회한다.'})
     @Get()
     async getAllComment(
-        @Query() commentPaginationRequestDto: CommentPaginationRequestDto,
-        @Res() res: Response
-    ): Promise<void>{
-        const response = await this.commentService.getAllComment(commentPaginationRequestDto);
-        res.status(HttpStatus.OK).json(response);
+        @Query() commentCursorOptionsDto: CommentCursorOptionsDto
+    ): Promise<PaginationResponseDto<Comment>>{
+        return await this.commentService.getAllComment(commentCursorOptionsDto);
     }
 }
