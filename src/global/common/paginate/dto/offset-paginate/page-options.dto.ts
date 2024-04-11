@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsOptionalAndNumber } from "../../../decorators/is-Optional-And-Number.decorators";
+import { IsOptionalAndNumber } from "../../../../../decorators/is-Optional-And-Number.decorators";
 
 export class PageOptionsDto{
 

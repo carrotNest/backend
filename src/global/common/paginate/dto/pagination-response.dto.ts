@@ -1,6 +1,6 @@
 import { IsArray } from "class-validator";
-import { PageMetaDto } from "./page-meta.dto";
-import { CursorPageMetaDto } from "./cursor-page-meta.dto";
+import { PageMetaDto } from "./offset-paginate/page-meta.dto";
+import { CursorPageMetaDto } from "./cursor-paginate/cursor-page-meta.dto";
 export class PaginationResponseDto<T> {
     @IsArray()
     data: T[];

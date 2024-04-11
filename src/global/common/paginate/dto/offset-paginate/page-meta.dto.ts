@@ -1,4 +1,4 @@
-import { pageMetaParameter } from "../../../interfaces/page-meta-parameter.interface";
+import { pageMetaParameter } from "../../../../../interfaces/page-meta-parameter.interface";
 
 export class PageMetaDto {
     readonly page: number;

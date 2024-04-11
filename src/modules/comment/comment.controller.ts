@@ -6,7 +6,7 @@ import { UserId } from '../../decorators/user-id.decorator';
 import { UserCreateResultInterface } from '../../interfaces/user-create-result.interface';
 import { UserJwtAuthGuard } from '../auth/guards/user-jwt.guard';
 import { CommentCursorOptionsDto } from './dto/commet-cursor-options.dto';
-import { PaginationResponseDto } from 'src/global/common/dto/pagination-response.dto';
+import { PaginationResponseDto } from 'src/global/common/paginate/dto/pagination-response.dto';
 import { Comment } from './entity/comment.entity';
 
 @ApiTags('comment')

@@ -8,8 +8,8 @@ import { Board } from '../board/entity/board.entity';
 import { CommentCursorOptionsDto } from './dto/commet-cursor-options.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UserCreateResultInterface } from 'src/interfaces/user-create-result.interface';
-import { PaginationResponseDto } from 'src/global/common/dto/pagination-response.dto';
-import { CursorPageMetaDto } from 'src/global/common/dto/cursor-page-meta.dto';
+import { PaginationResponseDto } from 'src/global/common/paginate/dto/pagination-response.dto';
+import { CursorPageMetaDto } from 'src/global/common/paginate/dto/cursor-paginate/cursor-page-meta.dto';
 
 @Injectable()
 export class CommentService {
@@ -53,7 +53,7 @@ export class CommentService {
             }
 
         const [comments, totalCount] = await querybuilder.getManyAndCount();
-        
+
         const isLastPage = totalCount <= take; 
         let hasNextData = true;
 
