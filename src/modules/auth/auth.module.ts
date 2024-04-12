@@ -10,6 +10,7 @@ import { PassportModule } from '@nestjs/passport';
 import { UserLocalStrategy } from './strategies/user-local.auth.strategy';
 import { UserJwtStrategy } from './strategies/user-jwt.strategy';
 import { Region } from '../region/entity/region.entity';
+import { RefreshTokenService } from '../../config/redis/refresh-token.service';
 
 @Module({
   imports: [
@@ -28,6 +29,6 @@ import { Region } from '../region/entity/region.entity';
     PassportModule
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserMapper, UserLocalStrategy, UserJwtStrategy]
+  providers: [AuthService, UserMapper, UserLocalStrategy, UserJwtStrategy, RefreshTokenService]
 })
 export class AuthModule {}

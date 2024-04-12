@@ -17,6 +17,7 @@ import { UserLoginResultInterface } from 'src/interfaces/user-login-result.inter
 import { UserNotFoundException } from './authException/User-Not-Found-Exception';
 import { ParentRegionNotFoundException } from './authException/ParentRegion-Not-Found-Exception';
 import { RegionNotFoundException } from './authException/Region-Not-Found-Exception';
+import { RefreshTokenService } from '../../config/redis/refresh-token.service';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +30,8 @@ export class AuthService {
 
         private readonly jwtService: JwtService,
         readonly configService: ConfigService,
-        private readonly userMapper: UserMapper
+        private readonly userMapper: UserMapper,
+        private readonly refreshTokenService: RefreshTokenService
     ) {}
 
     // 회원가입
@@ -102,6 +104,10 @@ export class AuthService {
             secret: this.configService.get('JWT_REFRESH_SECRET_KEY'),
             expiresIn: this.configService.get('JWT_REFRESH_EXPIRATION')
         });
+
+        // redis에 refresh 토큰 저장
+        const expiresIn = this.configService.get('JWT_REFRESH_EXPIRATION_TTL');
+        await this.refreshTokenService.setKey(`refreshToken:${id}`, refreshToken, expiresIn);
 
         const user = await this.userRepository.findOne({where: {id: id}, relations: ['region']});
         const userRegionName = user.region.name;
