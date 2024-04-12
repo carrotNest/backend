@@ -94,14 +94,21 @@ export class AuthService {
 
     async loginUser(id: number): Promise<UserLoginResultInterface> {
         const payload: {id: number} = {id};
+
         const accessToken = this.jwtService.sign(payload, {
             secret: this.configService.get('JWT_SECRET_KEY'),
         });
+        const refreshToken = this.jwtService.sign(payload, {
+            secret: this.configService.get('JWT_REFRESH_SECRET_KEY'),
+            expiresIn: this.configService.get('JWT_REFRESH_EXPIRATION')
+        });
+
         const user = await this.userRepository.findOne({where: {id: id}, relations: ['region']});
         const userRegionName = user.region.name;
     
         return {
             accessToken: accessToken,
+            refreshToken: refreshToken,
             regionName: userRegionName,
         };
     }
