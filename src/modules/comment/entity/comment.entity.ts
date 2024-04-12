@@ -6,14 +6,20 @@ import { User } from "../../user/entity/user.entity";
 @Entity()
 export class Comment extends BaseEntity {
 
+    @Column({type: 'int', name: 'board_id'})
+    boardId: number;
+
+    @Column({type: 'int', name: 'user_id'})
+    userId: number;
+    
     @Column()
     content: string;
 
-    @ManyToOne(type => Board, board => board.comments)
-    @JoinColumn({name: "board_id"})
+    @ManyToOne(type => Board)
+    @JoinColumn({name: 'board_id'})
     board: Board;
 
     @ManyToOne(type => User)
-    @JoinColumn({name: "user_id"})
+    @JoinColumn({name: 'user_id'})
     creator: User;
 }

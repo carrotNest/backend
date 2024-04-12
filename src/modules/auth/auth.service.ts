@@ -4,16 +4,19 @@ import { User } from '../user/entity/user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserMapper } from './mapper/user.mapper';
-import { AccountIdAlreadyExistsException } from './authException/AccountIdAlreadyExistsException';
-import { NicknameAlreadyExistsException } from './authException/NicknameAlreadyExistsException';
+import { AccountIdAlreadyExistsException } from './authException/AccountId-Already-Exists-Exception';
+import { NicknameAlreadyExistsException } from './authException/Nickname-Already-Exists-Exception';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
-import { NotFoundUserException } from './authException/NotFoundUserException';
-import { LoginInvalidPasswordException } from './authException/LoginInvalidPasswordException';
+import { LoginInvalidPasswordException } from './authException/Login-Invalid-Password-Exception';
 import * as bcrypt from 'bcrypt';
 import { UserCreateResultInterface } from '../../interfaces/user-create-result.interface';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Region } from '../region/entity/region.entity';
+import { UserLoginResultInterface } from 'src/interfaces/user-login-result.interface';
+import { UserNotFoundException } from './authException/User-Not-Found-Exception';
+import { ParentRegionNotFoundException } from './authException/ParentRegion-Not-Found-Exception';
+import { RegionNotFoundException } from './authException/Region-Not-Found-Exception';
 
 @Injectable()
 export class AuthService {
@@ -34,14 +37,21 @@ export class AuthService {
 
         // 동/면/리 같을 경우 상위 지역으로 중복 방지 
         const parentRegion = await this.regionRepository.findOne({where: {name: createUserDto.region.parentRegionName}});
+        if(!parentRegion){
+            throw new ParentRegionNotFoundException();
+        }
+
         const region = await this.regionRepository.findOne({where: {
             name: createUserDto.region.RegionName,
             parent: parentRegion
         }});
+        if(!region){
+            throw new RegionNotFoundException();
+        }
         
         
         // 이메일 유효성체크
-        const isAccountIDExist = await this.userRepository.findOne({where: {accountID:createUserDto.accountID}});
+        const isAccountIDExist = await this.userRepository.findOne({where: {accountId:createUserDto.accountId}});
         if(isAccountIDExist) {
           throw new AccountIdAlreadyExistsException();
         }
@@ -67,8 +77,8 @@ export class AuthService {
     
     // 비밀번호 체크
     async validateUser(authCredentialsDto: AuthCredentialsDto): Promise<{id: number}>{
-        const {accountID, password} = authCredentialsDto;
-        const user = await this.userRepository.findOneBy({accountID});
+        const {accountId, password} = authCredentialsDto;
+        const user = await this.userRepository.findOneBy({accountId});
         if(user){
             const isPasswordMatch = await bcrypt.compare(password, user.password);
             if(isPasswordMatch){
@@ -77,16 +87,22 @@ export class AuthService {
                 throw new LoginInvalidPasswordException();
             }
         }else{
-            throw new NotFoundUserException();
+            throw new UserNotFoundException();
         }
 
     }
 
-    async loginUser(id: number): Promise<{accessToken: string}> {
+    async loginUser(id: number): Promise<UserLoginResultInterface> {
         const payload: {id: number} = {id};
         const accessToken = this.jwtService.sign(payload, {
             secret: this.configService.get('JWT_SECRET_KEY'),
         });
-        return {accessToken};
+        const user = await this.userRepository.findOne({where: {id: id}, relations: ['region']});
+        const userRegionName = user.region.name;
+    
+        return {
+            accessToken: accessToken,
+            regionName: userRegionName,
+        };
     }
 }

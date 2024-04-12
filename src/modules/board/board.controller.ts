@@ -6,6 +6,8 @@ import {
   HttpStatus,
   Logger,
   Param,
+  ParseIntPipe,
+  Patch,
   Post,
   Query,
   Res,
@@ -16,15 +18,20 @@ import {
 import { Response } from 'express';
 import { BoardService } from './board.service';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserJwtAuthGuard } from '../auth/guards/user-jwt.guard';
 import { UserId } from '../../decorators/user-id.decorator';
 import { UserCreateResultInterface } from '../../interfaces/user-create-result.interface';
-import { PageOptionsDto } from '../../global/common/dto/page-options.dto';
-import { PaginationResponseDto } from '../../global/common/dto/pagination-response.dto';
+import { PageOptionsDto } from '../../global/common/paginate/dto/offset-paginate/page-options.dto';
+import { PaginationResponseDto } from '../../global/common/paginate/dto/pagination-response.dto';
 import { Board } from './entity/board.entity';
+import { GetBoardDto } from './dto/get-board.dto';
+import { BoardStatus } from '../../types/enums/boardStatus.enum';
+import { BoardStatusValidationPipe } from '../../pipes/board-status-validation.pipe';
+
 @ApiTags('board')
+@ApiBearerAuth()
 @UseGuards(UserJwtAuthGuard)
 @Controller('boards')
 export class BoardController {
@@ -46,6 +53,7 @@ export class BoardController {
     return await this.boardService.createBoard(createBoardDto, id, image);
   }
 
+  @HttpCode(200)
   @ApiOperation({ summary: '게시물 전체 조회 API', description: '사용자는 본인이 거주하는 동/면/리의 전체 게시글을 최신순으로 조회할 수 있다.'})
   @Get()
   async getAllBoard(
@@ -56,11 +64,22 @@ export class BoardController {
     return await this.boardService.getAllBoard(pageOptionsDto, id);
   }
 
-  @ApiOperation({ summary: '사용자는 상세 게시글을 조회한다.' })
+  @HttpCode(200)
+  @ApiOperation({ summary: '게시물 상세 조회 API' })
   @Get('/:id')
-  async getBoard(@Param('id') id: number, @Res() res: Response): Promise<void> {
-    const response = await this.boardService.getBoardDetail(id);
-    res.status(HttpStatus.OK).json(response);
+  async getBoard(@Param('id', ParseIntPipe) id: number ): Promise<GetBoardDto> {
+    return await this.boardService.getBoardDetail(id);
+  }
+
+  @HttpCode(200)
+  @ApiOperation({ summary: '게시물 상태 변경 API', description: '게시물을 생성한 사용자는 게시물의 판매중/판매완료 여부를 설정할 수 있다.'})
+  @Patch('/:id/status')
+  async updateBoardStatus(
+    @Param('id', ParseIntPipe) boardId: number,
+    @UserId() userId: number,
+    @Body('status', BoardStatusValidationPipe) status: BoardStatus
+    ): Promise<GetBoardDto>{
+      return await this.boardService.updateBoardStatus(boardId, userId, status);
   }
 
    @Post('/:boardId/likes')

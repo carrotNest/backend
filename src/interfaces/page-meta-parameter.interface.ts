@@ -1,4 +1,4 @@
-import { PageOptionsDto } from "../global/common/dto/page-options.dto"
+import { PageOptionsDto } from "../global/common/paginate/dto/offset-paginate/page-options.dto"
 
 export interface pageMetaParameter{
     pageOptionsDto: PageOptionsDto;

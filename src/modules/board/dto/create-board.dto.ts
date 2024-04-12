@@ -6,11 +6,11 @@ import { IsNotEmptyAndNumber } from '../../../decorators/is-Not-Empty-And-Number
 
 export class CreateBoardDto {
 
-  @ApiProperty({type: String, description: '게시물 이름', required: true, example: '자바 객체 지향의 원리와 이해 안써서 팔려구여!'})
+  @ApiProperty({type: String, description: '게시물 이름', required: true, example: '책 팔아요!'})
   @IsNotEmptyAndString(1, 128)
   stuffName!: string;
 
-  @ApiProperty({type: String, description: '게시물 내용', required: true, example: '제가 요즘 nest에 빠져서 java 갖다 버렸거든요? 그래서 이거 싸게 팔 건데 많관부!!'})
+  @ApiProperty({type: String, description: '게시물 내용', required: true, example: '싸게 내놓습니다!'})
   @IsNotEmptyAndString(1, 128)
   stuffContent!: string;
 
@@ -33,7 +33,7 @@ export class CreateBoardDto {
   stuffCategory!: StuffCategory;
 
 
-  @ApiProperty({type: String, format: 'binary', description: '첨부할 사진'})
+  @ApiProperty({type: String, format: 'binary', description: '첨부할 사진', example: '4f457e7df2f7242fc74ec4667b4bccb5d0bbab1214a29e381afae56101ded106'})
   @IsOptional()
   image?: Express.Multer.File;
 }

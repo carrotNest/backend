@@ -5,9 +5,11 @@ import { User } from '../user/entity/user.entity';
 import { CommentMapper } from './mapper/comment.mapper';
 import { Comment } from './entity/comment.entity';
 import { Board } from '../board/entity/board.entity';
-import { CommentPaginationRequestDto } from './dto/commet-pagination-request.dto';
+import { CommentCursorOptionsDto } from './dto/commet-cursor-options.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UserCreateResultInterface } from 'src/interfaces/user-create-result.interface';
+import { PaginationResponseDto } from 'src/global/common/paginate/dto/pagination-response.dto';
+import { CursorPageMetaDto } from 'src/global/common/paginate/dto/cursor-paginate/cursor-page-meta.dto';
 
 @Injectable()
 export class CommentService {
@@ -36,25 +38,34 @@ export class CommentService {
         };
     }
 
-    async getAllComment(commentPaginationRequestDto: CommentPaginationRequestDto): Promise<Comment[]> {
-        const {boardId, cursor, limit} = commentPaginationRequestDto;
-        const comments = await this.commentRepository.createQueryBuilder('comment')
-            .leftJoin('comment.creator', 'user')
-            .select([
-                'comment.id',
-                'comment.openChatUrl',
-                'comment.price',
-                'comment.createAt',
-                'user.nickname'
-            ])
+    async getAllComment(commentCursorOptionsDto: CommentCursorOptionsDto): Promise<PaginationResponseDto<Comment>> {
+        let {boardId, cursor, take} = commentCursorOptionsDto;
+        const querybuilder = this.commentRepository
+            .createQueryBuilder('comment')
+            .innerJoin('comment.creator', 'user')
+            .select(['comment.id', 'comment.content', 'comment.createAt', 'user.nickname'])
             .where('comment.board.id =:id', {id: boardId})
-            .andWhere('comment.id < :cursor' ,{cursor: cursor})
             .orderBy('comment.createAt', 'DESC')
-            .limit(limit)
-            .getMany();
+            .limit(take);
+
+            if(cursor){
+                querybuilder.andWhere('comment.id < :cursor' ,{cursor: cursor});
+            }
+
+        const [comments, totalCount] = await querybuilder.getManyAndCount();
+
+        const isLastPage = totalCount <= take; 
+        let hasNextData = true;
+
+        if(isLastPage){ 
+            hasNextData = false; 
+            cursor = null; 
+        }else{
+            cursor = comments[comments.length-1].id; 
+        }
         
-        return comments;
+        const pageMetaDto = new CursorPageMetaDto({commentCursorOptionsDto, totalCount, hasNextData, cursor});
+
+        return new PaginationResponseDto(comments, pageMetaDto);
     }
-
-
 }

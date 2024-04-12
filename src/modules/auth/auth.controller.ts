@@ -6,6 +6,7 @@ import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { UserCreateResultInterface } from '../../interfaces/user-create-result.interface';
 import { UserId } from '../../decorators/user-id.decorator';
 import { UserLocalAuthGuard } from './guards/user-local.auth.guard';
+import { UserLoginResultInterface } from '../../interfaces/user-login-result.interface';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -31,7 +32,7 @@ export class AuthController {
     async loginUser(
         @Body() authCredentialsDto: AuthCredentialsDto,
         @UserId() userId: number
-    ): Promise<{accessToken: string}>{
+    ): Promise<UserLoginResultInterface>{
         return this.authService.loginUser(userId);
     }
 }

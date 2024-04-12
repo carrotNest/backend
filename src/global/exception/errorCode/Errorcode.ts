@@ -8,8 +8,14 @@ export enum ErrorCode {
     USER_INVALID_PROVINCE = 'U005',
     USER_INVALID_CITY = 'U006',
 
+    //Region
+    PARENT_REGION_NOT_FOUND = 'R001',
+    REGION_NOT_FOUND = 'R002',
+
     //Board
     BOARD_NOT_FOUND = 'B001',
+    BOARD_STATUS_NOT_FOUND = 'B002',
+    BOARD_STATUS_FORBIDDEN = 'B003',
     
     //pagination
     PAGE_NOT_EXIST = 'P001',

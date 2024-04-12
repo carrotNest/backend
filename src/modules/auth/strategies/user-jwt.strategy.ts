@@ -5,7 +5,7 @@ import { User } from "../../user/entity/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { NotFoundUserException } from "../authException/NotFoundUserException";
+import { UserNotFoundException } from "../authException/User-Not-Found-Exception";
 
 @Injectable()
 export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt'){
@@ -26,6 +26,6 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt'){
         if(user){
             return {id};
         }
-        throw new NotFoundUserException();
+        throw new UserNotFoundException();
     }
 }

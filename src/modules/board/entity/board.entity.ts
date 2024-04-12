@@ -10,6 +10,12 @@ import { Region } from '../../region/entity/region.entity';
 @Entity()
 export class Board extends BaseEntity {
 
+  @Column({ type: 'int', name: 'region_id'})
+  regionId: number;
+
+  @Column({ type: 'int', name: 'user_id'})
+  userId: number;
+
   @Column()
   stuffName!: string;
 
@@ -41,10 +47,4 @@ export class Board extends BaseEntity {
   @ManyToOne((type) => Region)
   @JoinColumn({name: 'region_id' })
   region: Region;
-
-  @OneToMany((type) => Comment, (comment) => comment.board)
-  comments: Comment[];
-
-  @Column({ type: 'int', name: 'region_id', nullable: true })
-  regionId: number;
 }
