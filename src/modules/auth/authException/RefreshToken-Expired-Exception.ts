@@ -2,11 +2,11 @@ import { HttpStatus } from "@nestjs/common";
 import { CustomException } from "../../../global/exception/customException";
 import { ErrorCode } from "../../../global/exception/errorCode/Errorcode";
 
-export class LoginInvalidPasswordException extends CustomException {
+export class RefreshTokenExpiredException extends CustomException {
     constructor(){
         super(
-            ErrorCode.USER_INVALID_PASSWROD,
-            '비밀번호가 일치하지 않습니다! 다시 로그인을 해주세요.',
+            ErrorCode.REFRESH_TOKEN_EXPIRED,
+            'Refresh Token이 만료되었습니다! 다시 로그인해주세요.',
             HttpStatus.UNAUTHORIZED,
         );
     }

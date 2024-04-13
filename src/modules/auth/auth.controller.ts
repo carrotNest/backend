@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Post, UseGuards} from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, Res, UseGuards} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthService} from './auth.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -6,7 +6,9 @@ import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { UserCreateResultInterface } from '../../interfaces/user-create-result.interface';
 import { UserId } from '../../decorators/user-id.decorator';
 import { UserLocalAuthGuard } from './guards/user-local.auth.guard';
-import { UserLoginResultInterface } from '../../interfaces/user-login-result.interface';
+import { Response } from 'express';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+
 
 @ApiTags('auth')
 @Controller('auth')
@@ -31,8 +33,31 @@ export class AuthController {
     @Post('/signin')
     async loginUser(
         @Body() authCredentialsDto: AuthCredentialsDto,
-        @UserId() userId: number
-    ): Promise<UserLoginResultInterface>{
-        return this.authService.loginUser(userId);
+        @UserId() userId: number,
+        @Res() res: Response
+    ): Promise<void>{
+        const {accessToken, refreshToken, regionName} = await this.authService.loginUser(userId);
+
+        res.cookie('accessToken', accessToken, {httpOnly: true});
+        res.cookie('refreshToken', refreshToken, {httpOnly: true});
+
+        res.status(201).json({
+            message: '로그인 성공',
+            regionName: regionName
+        });
+    }
+
+    @Post('/refresh')
+    async refreshToken(
+        @Body() refreshTokenDto: RefreshTokenDto,
+        @Res() res: Response
+    ): Promise<void>{
+        const {newAccessToken} = await this.authService.refreshToken(refreshTokenDto);
+
+        res.cookie('newAccessToken', newAccessToken, {httpOnly: true});
+
+        res.status(201).json({
+            message: 'accessToken 갱신 성공'
+        });
     }
 }
