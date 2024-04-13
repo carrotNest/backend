@@ -119,7 +119,7 @@ export class AuthService {
         };
     }
 
-    async refreshToken(refreshTokenDto: RefreshTokenDto){
+    async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<{newAccessToken: string}>{
         const {refreshToken} = refreshTokenDto;
 
         const payload = this.jwtService.verify(refreshToken, {
