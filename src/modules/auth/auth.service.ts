@@ -37,10 +37,9 @@ export class AuthService {
         private readonly refreshTokenService: RefreshTokenService
     ) {}
 
-    // 회원가입
+
     async signup(createUserDto: CreateUserDto): Promise<UserCreateResultInterface>{
 
-        // 동/면/리 같을 경우 상위 지역으로 중복 방지 
         const parentRegion = await this.regionRepository.findOne({where: {name: createUserDto.region.parentRegionName}});
         if(!parentRegion){
             throw new ParentRegionNotFoundException();
@@ -54,18 +53,16 @@ export class AuthService {
             throw new RegionNotFoundException();
         }
         
-        
-        // 이메일 유효성체크
         const isAccountIDExist = await this.userRepository.findOne({where: {accountId:createUserDto.accountId}});
         if(isAccountIDExist) {
           throw new AccountIdAlreadyExistsException();
         }
-        // 닉네임 유효성체크
+
         const isNicknameExist = await this.userRepository.findOne({where: {nickname: createUserDto.nickname}});
         if(isNicknameExist) {
             throw new NicknameAlreadyExistsException();
         }
-        // 비밀번호 암호화
+
         const {password} = createUserDto;
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(password, salt);
@@ -80,7 +77,7 @@ export class AuthService {
         };
     }
     
-    // 비밀번호 체크
+
     async validateUser(authCredentialsDto: AuthCredentialsDto): Promise<{id: number}>{
         const {accountId, password} = authCredentialsDto;
         const user = await this.userRepository.findOneBy({accountId});
@@ -109,7 +106,6 @@ export class AuthService {
             expiresIn: this.configService.get('JWT_REFRESH_EXPIRATION')
         });
 
-        // redis에 refresh 토큰 저장
         const expiresIn = this.configService.get('JWT_REFRESH_EXPIRATION_TTL');
         await this.refreshTokenService.setKey(`refreshToken:${id}`, refreshToken, expiresIn);
 
@@ -126,21 +122,17 @@ export class AuthService {
     async refreshToken(refreshTokenDto: RefreshTokenDto){
         const {refreshToken} = refreshTokenDto;
 
-        // refreshToken의 유효성 검증
         const payload = this.jwtService.verify(refreshToken, {
             secret: this.configService.get('JWT_REFRESH_SECRET_KEY')
         });
 
-        // dto의 refreshToken과 redis의 refreshToken을 비교
         const userId = payload.id;
         const storedRefreshToken = await this.refreshTokenService.getKey(`refreshToken:${userId}`);
 
-        // redis에 refreshToken이 없다면 다시 로그인하도록 에러처리
         if(storedRefreshToken === null){
             throw new RefreshTokenExpiredException();
         }
 
-        // 같다면 새로운 accessToken + refreshToken 발급 
         if(storedRefreshToken === refreshToken){
             const newPayload = {id: userId};
             const newAccessToken = this.jwtService.sign(newPayload, {
