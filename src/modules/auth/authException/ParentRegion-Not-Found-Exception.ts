@@ -9,6 +9,6 @@ export class ParentRegionNotFoundException extends CustomException {
             ErrorCode.PARENT_REGION_NOT_FOUND,
             '없는 상위 지역명입니다!',
             HttpStatus.NOT_FOUND,
-        )
+        );
     }
 }

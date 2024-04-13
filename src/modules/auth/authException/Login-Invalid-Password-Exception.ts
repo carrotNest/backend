@@ -8,6 +8,6 @@ export class LoginInvalidPasswordException extends CustomException {
             ErrorCode.USER_INVALID_PASSWROD,
             '비밀번호가 일치하지 않습니다! 다시 로그인을 해주세요.',
             HttpStatus.UNAUTHORIZED,
-        )
+        );
     }
 }
