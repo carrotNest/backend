@@ -81,11 +81,5 @@ export class BoardController {
     ): Promise<GetBoardDto>{
       return await this.boardService.updateBoardStatus(boardId, userId, status);
   }
-
-   @Post('/:boardId/likes')
-  async updateBoardLike(@Body() body: { boardId: number, userId: number }, @Res() res: Response): Promise<void> {
-    const { boardId, userId } = body;
-    const response = await this.boardService.updateBoardLikes(boardId, userId);
-    res.status(HttpStatus.CREATED).json(response);
-  }
+  
 }

@@ -124,41 +124,5 @@ export class BoardService {
 
     return updateBoard;
   }
-
-
-  async updateBoardLikes(boardId: number, userId: number): Promise<{board: Board; isUserChecked: Boolean}>{
-    const isBoardExist = await this.boardRepository.findOne({where: {id: boardId}});
-    if(!isBoardExist){
-      throw new BoardNotFoundException();
-    }
-    const isUserExist = await this.userRepository.findOne({where:{id: userId}});
-    if(!isUserExist){
-      throw new UserNotFoundException();
-    }
-
-    //게시물 좋아요 key, 유저가 해당 게시물에 좋아요 여부 key생성 -> redis가 게시물의 좋아요와 유저의 중복체크를 확인해줌
-    const redisBoardKey = 'Board:' + boardId.toString(); 
-    const redisUserKey = 'User:' + userId.toString();
-
-    // 해당 게시물key에 사용자가 좋아요 눌렀는 지 판별
-    const isUserLiked = await this.redisService.isUserIncludeSet(redisUserKey, boardId.toString());
-
-    // 좋아요를 누르지 않았다면 -> 좋아요+1 후 게시물key에 add
-    let boardLikes: number;
-    let isUserChecked: boolean;
-    if(!isUserLiked){
-      boardLikes = await this.redisService.boardLikesInc(redisBoardKey);
-      await this.redisService.addUserLikesSet(redisUserKey, boardId.toString());
-      isUserChecked = true;
-    // 좋아요를 눌렀다면 -> 좋아요-1 후 게시물 key에 remove
-    }else{
-      boardLikes = await this.redisService.boardLikesDec(redisBoardKey);
-      await this.redisService.removeUserLikesSet(redisUserKey, boardId.toString());
-      isUserChecked = false;
-    }
-    // 데이터베이스에 반영
-    isBoardExist.likesCount = boardLikes;
-    await this.boardRepository.save(isBoardExist);
-    return {board:isBoardExist, isUserChecked};
-  }
+  
 }
