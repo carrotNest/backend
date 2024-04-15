@@ -15,7 +15,6 @@ import { PageNotExists } from '../../global/exception/pageException/Page-Not-Exi
 import { GetBoardDto } from './dto/get-board.dto';
 import { BoardStatus } from '../../types/enums/boardStatus.enum';
 import { BoardNotFoundException } from './boardException/Board-Not-Found-Exception';
-import { UserNotFoundException } from '../auth/authException/User-Not-Found-Exception';
 import { BoardStatusForbiddenException } from './boardException/Board-Status-Forbidden-Exception';
 
 @Injectable()
@@ -124,5 +123,5 @@ export class BoardService {
 
     return updateBoard;
   }
-  
+
 }

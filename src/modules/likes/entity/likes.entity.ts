@@ -1,5 +1,4 @@
 import { Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { BaseEntity } from "../../../global/common/entity/base.entitiy";
 import { User } from "../../user/entity/user.entity";
 import { Board } from "../../board/entity/board.entity";
 

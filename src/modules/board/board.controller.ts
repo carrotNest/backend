@@ -3,19 +3,16 @@ import {
   Controller,
   Get,
   HttpCode,
-  HttpStatus,
   Logger,
   Param,
   ParseIntPipe,
   Patch,
   Post,
   Query,
-  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { Response } from 'express';
 import { BoardService } from './board.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -81,5 +78,5 @@ export class BoardController {
     ): Promise<GetBoardDto>{
       return await this.boardService.updateBoardStatus(boardId, userId, status);
   }
-  
+
 }
