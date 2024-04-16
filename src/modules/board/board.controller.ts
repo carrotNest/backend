@@ -64,8 +64,11 @@ export class BoardController {
   @HttpCode(200)
   @ApiOperation({ summary: '게시물 상세 조회 API' })
   @Get('/:id')
-  async getBoard(@Param('id', ParseIntPipe) id: number ): Promise<GetBoardDto> {
-    return await this.boardService.getBoardDetail(id);
+  async getBoard(
+    @Param('id', ParseIntPipe) boardId: number,
+    @UserId() userId: number,
+  ){
+    return await this.boardService.getBoardDetail(boardId, userId);
   }
 
   @HttpCode(200)

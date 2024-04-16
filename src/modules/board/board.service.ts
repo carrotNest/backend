@@ -16,6 +16,7 @@ import { GetBoardDto } from './dto/get-board.dto';
 import { BoardStatus } from '../../types/enums/boardStatus.enum';
 import { BoardNotFoundException } from './boardException/Board-Not-Found-Exception';
 import { BoardStatusForbiddenException } from './boardException/Board-Status-Forbidden-Exception';
+import { Likes } from '../likes/entity/likes.entity';
 
 @Injectable()
 export class BoardService {
@@ -24,6 +25,8 @@ export class BoardService {
     private readonly boardRepository: Repository<Board>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Likes)
+    private readonly likesRepository: Repository<Likes>,
 
     private readonly boardMapper: BoardMapper,
     private readonly s3Service: S3Service,
@@ -49,7 +52,7 @@ export class BoardService {
     };
   }
 
-  async getBoardDetail(boardId: number): Promise<GetBoardDto> {
+  async getBoardDetail(boardId: number, userId: number){
     const board = await this.boardRepository
       .createQueryBuilder('board')
       .select(['board.id',
@@ -72,12 +75,23 @@ export class BoardService {
         throw new BoardNotFoundException();
       }
 
+      // 사용자가 좋아요를 눌렀는 지 안눌렀는 지 체크
+      let isUserPushLikes = true;
+
+      const userLike = await this.likesRepository.findOne({where: {
+        boardId: boardId,
+        userId: userId
+      }});
+
       const userNickname = board.creator.nickname;
       const regionName = board.region.name;
 
       const getBoardDto = new GetBoardDto(board, userNickname, regionName);
 
-      return getBoardDto;
+      if(!userLike){
+        isUserPushLikes = false;
+      }
+      return {getBoardDto, isUserPushLikes};
   }
 
   async getAllBoard(pageOptionsDto: PageOptionsDto, id: number):Promise<PaginationResponseDto<Board>>{

@@ -10,9 +10,10 @@ import { S3Module } from '../../config/s3/s3.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { RedisModule } from '@songkeys/nestjs-redis';
 import { RedisService } from '../../config/redis/redis.service';
+import { Likes } from '../likes/entity/likes.entity';
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Board, User, Comment]),
+    TypeOrmModule.forFeature([Board, User, Comment, Likes]),
     S3Module,
     RedisModule,
     MulterModule.register(),
