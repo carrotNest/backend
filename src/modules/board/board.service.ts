@@ -17,6 +17,7 @@ import { BoardStatus } from '../../types/enums/boardStatus.enum';
 import { BoardNotFoundException } from './boardException/Board-Not-Found-Exception';
 import { BoardStatusForbiddenException } from './boardException/Board-Status-Forbidden-Exception';
 import { Likes } from '../likes/entity/likes.entity';
+import { BoardResponseDto } from './dto/board-response.dto';
 
 @Injectable()
 export class BoardService {
@@ -37,7 +38,7 @@ export class BoardService {
     createBoardDto: CreateBoardDto,
     id: number,
     image: Express.Multer.File,
-  ): Promise<UserCreateResultInterface> {
+  ): Promise<BoardResponseDto> {
 
     const creator = await this.userRepository.findOne({where: {id: id}, relations: ['region']});
     const region = creator.region;
@@ -46,13 +47,16 @@ export class BoardService {
 
     const savedBoard = await this.boardRepository.save(newBoardEntity);
 
-    return {
-      message: '새로운 게시물 생성',
-      userId: savedBoard.creator.id
-    };
+    const userNickname = creator.nickname;
+    const regionName = region.name;
+
+    const board = new GetBoardDto(savedBoard, userNickname, regionName);
+    const response = new BoardResponseDto(board, false);
+
+    return response;
   }
 
-  async getBoardDetail(boardId: number, userId: number){
+  async getBoardDetail(boardId: number, userId: number): Promise<BoardResponseDto>{
     const board = await this.boardRepository
       .createQueryBuilder('board')
       .select(['board.id',
@@ -75,7 +79,6 @@ export class BoardService {
         throw new BoardNotFoundException();
       }
 
-      // 사용자가 좋아요를 눌렀는 지 안눌렀는 지 체크
       let isUserPushLikes = true;
 
       const userLike = await this.likesRepository.findOne({where: {
@@ -91,7 +94,10 @@ export class BoardService {
       if(!userLike){
         isUserPushLikes = false;
       }
-      return {getBoardDto, isUserPushLikes};
+
+      const response = new BoardResponseDto(getBoardDto, isUserPushLikes);
+
+      return response;
   }
 
   async getAllBoard(pageOptionsDto: PageOptionsDto, id: number):Promise<PaginationResponseDto<Board>>{
@@ -119,9 +125,14 @@ export class BoardService {
     } 
   }
 
-  async updateBoardStatus(boardId: number, userId: number, status: BoardStatus):Promise<GetBoardDto>{
+  async updateBoardStatus(boardId: number, userId: number, status: BoardStatus):Promise<BoardResponseDto>{
 
     const board = await this.boardRepository.findOne({where: {id: boardId}, relations: ['creator', 'region']});
+
+    if(!board){
+      throw new BoardNotFoundException();
+    }
+    
     const boardCreatorId = board.userId;
 
     if(userId !== boardCreatorId){
@@ -135,7 +146,20 @@ export class BoardService {
     const regionName = board.region.name;
     const updateBoard = new GetBoardDto(board, userNickname, regionName);
 
-    return updateBoard;
+    let isUserPushLikes = true;
+
+    const userLike = await this.likesRepository.findOne({where: {
+      boardId: boardId,
+      userId: userId
+    }});
+
+    if(!userLike){
+      isUserPushLikes = false;
+    }
+
+    const response = new BoardResponseDto(updateBoard, isUserPushLikes);
+
+    return response;
   }
 
 }

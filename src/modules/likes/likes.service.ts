@@ -8,6 +8,7 @@ import { User } from '../user/entity/user.entity';
 import { UserNotFoundException } from '../auth/authException/User-Not-Found-Exception';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GetBoardDto } from '../board/dto/get-board.dto';
+import { BoardResponseDto } from '../board/dto/board-response.dto';
 
 @Injectable()
 export class LikesService {
@@ -22,7 +23,7 @@ export class LikesService {
         private readonly likesMapper: LikesMapper
     ){}
 
-    async updateBoardLikes(boardId: number, userId: number){
+    async updateBoardLikes(boardId: number, userId: number): Promise<BoardResponseDto>{
 
         const board = await this.boardRepository.findOne({where: {id: boardId}, relations: ['creator', 'region']});
         
@@ -61,6 +62,8 @@ export class LikesService {
         }
 
         const updateBoard = new GetBoardDto(board, userNickname, regionName);
-        return {updateBoard, isUserPushLikes};
+        const response = new BoardResponseDto(updateBoard, isUserPushLikes);
+        
+        return response;
     }
 }

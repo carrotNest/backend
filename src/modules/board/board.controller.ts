@@ -26,6 +26,7 @@ import { Board } from './entity/board.entity';
 import { GetBoardDto } from './dto/get-board.dto';
 import { BoardStatus } from '../../types/enums/boardStatus.enum';
 import { BoardStatusValidationPipe } from '../../pipes/board-status-validation.pipe';
+import { BoardResponseDto } from './dto/board-response.dto';
 
 @ApiTags('board')
 @ApiBearerAuth()
@@ -45,7 +46,7 @@ export class BoardController {
     @Body() createBoardDto: CreateBoardDto,
     @UploadedFile() image: Express.Multer.File,
     @UserId() id: number,
-  ): Promise<UserCreateResultInterface> {
+  ): Promise<BoardResponseDto> {
     this.logger.verbose(`1.[사용자 ${id}가 게시물 생성] 2.[Dto: ${JSON.stringify(createBoardDto)}]`);
     return await this.boardService.createBoard(createBoardDto, id, image);
   }
@@ -67,7 +68,7 @@ export class BoardController {
   async getBoard(
     @Param('id', ParseIntPipe) boardId: number,
     @UserId() userId: number,
-  ){
+  ): Promise<BoardResponseDto>{
     return await this.boardService.getBoardDetail(boardId, userId);
   }
 
@@ -78,7 +79,7 @@ export class BoardController {
     @Param('id', ParseIntPipe) boardId: number,
     @UserId() userId: number,
     @Body('status', BoardStatusValidationPipe) status: BoardStatus
-    ): Promise<GetBoardDto>{
+    ): Promise<BoardResponseDto>{
       return await this.boardService.updateBoardStatus(boardId, userId, status);
   }
 
