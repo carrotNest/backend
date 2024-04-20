@@ -7,6 +7,7 @@ import { LikesMapper } from './mapper/likes.mapper';
 import { User } from '../user/entity/user.entity';
 import { UserNotFoundException } from '../auth/authException/User-Not-Found-Exception';
 import { InjectRepository } from '@nestjs/typeorm';
+import { GetBoardDto } from '../board/dto/get-board.dto';
 
 @Injectable()
 export class LikesService {
@@ -17,13 +18,13 @@ export class LikesService {
         private readonly boardRepository: Repository<Board>,
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
-        
+
         private readonly likesMapper: LikesMapper
     ){}
 
-    async updateBoardLikes(boardId: number, userId: number){
+    async updateBoardLikes(boardId: number, userId: number): Promise<GetBoardDto>{
 
-        const board = await this.boardRepository.findOne({where: {id: boardId}});
+        const board = await this.boardRepository.findOne({where: {id: boardId}, relations: ['creator', 'region']});
         
         if(!board){
             throw new BoardNotFoundException();
@@ -40,14 +41,13 @@ export class LikesService {
             user: {id: userId}
         }});
 
+        const userNickname = board.creator.nickname;
+        const regionName = board.region.name;
+
         if(isUserLikesExist){
             await this.likesRepository.remove(isUserLikesExist);
             board.likesCount = board.likesCount>0? board.likesCount-1 : 0;
             await this.boardRepository.save(board);
-            
-            return {
-                message: '좋아요 취소'
-            }
 
         } else{
             const newLikesEntity = this.likesMapper.DtoToEntity(board, user);
@@ -55,10 +55,9 @@ export class LikesService {
 
             board.likesCount++;
             await this.boardRepository.save(board);
-            return {
-                message: '좋아요 성공'
-            }
-        
         }
+
+        const updateBoard = new GetBoardDto(board, userNickname, regionName);
+        return updateBoard;
     }
 }

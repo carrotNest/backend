@@ -3,6 +3,7 @@ import { LikesService } from './likes.service';
 import { UserId } from 'src/decorators/user-id.decorator';
 import { UserJwtAuthGuard } from '../auth/guards/user-jwt.guard';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { GetBoardDto } from '../board/dto/get-board.dto';
 
 @ApiTags('likes')
 @UseGuards(UserJwtAuthGuard)
@@ -18,7 +19,7 @@ export class LikesController {
     async updateBoardLikes(
         @Param('boardId', ParseIntPipe) boardId: number,
         @UserId() userId: number
-    ){
+    ): Promise<GetBoardDto>{
         return await this.likesService.updateBoardLikes(boardId, userId);
     }
 }
