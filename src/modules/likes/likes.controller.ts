@@ -19,7 +19,7 @@ export class LikesController {
     async updateBoardLikes(
         @Param('boardId', ParseIntPipe) boardId: number,
         @UserId() userId: number
-    ): Promise<GetBoardDto>{
+    ){
         return await this.likesService.updateBoardLikes(boardId, userId);
     }
 }

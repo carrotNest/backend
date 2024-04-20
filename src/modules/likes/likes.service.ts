@@ -22,7 +22,7 @@ export class LikesService {
         private readonly likesMapper: LikesMapper
     ){}
 
-    async updateBoardLikes(boardId: number, userId: number): Promise<GetBoardDto>{
+    async updateBoardLikes(boardId: number, userId: number){
 
         const board = await this.boardRepository.findOne({where: {id: boardId}, relations: ['creator', 'region']});
         
@@ -44,10 +44,13 @@ export class LikesService {
         const userNickname = board.creator.nickname;
         const regionName = board.region.name;
 
+        let isUserPushLikes = true;
+
         if(isUserLikesExist){
             await this.likesRepository.remove(isUserLikesExist);
             board.likesCount = board.likesCount>0? board.likesCount-1 : 0;
             await this.boardRepository.save(board);
+            isUserPushLikes = false;
 
         } else{
             const newLikesEntity = this.likesMapper.DtoToEntity(board, user);
@@ -58,6 +61,6 @@ export class LikesService {
         }
 
         const updateBoard = new GetBoardDto(board, userNickname, regionName);
-        return updateBoard;
+        return {updateBoard, isUserPushLikes};
     }
 }
