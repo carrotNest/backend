@@ -3,19 +3,16 @@ import {
   Controller,
   Get,
   HttpCode,
-  HttpStatus,
   Logger,
   Param,
   ParseIntPipe,
   Patch,
   Post,
   Query,
-  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { Response } from 'express';
 import { BoardService } from './board.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -29,6 +26,7 @@ import { Board } from './entity/board.entity';
 import { GetBoardDto } from './dto/get-board.dto';
 import { BoardStatus } from '../../types/enums/boardStatus.enum';
 import { BoardStatusValidationPipe } from '../../pipes/board-status-validation.pipe';
+import { BoardResponseDto } from './dto/board-response.dto';
 
 @ApiTags('board')
 @ApiBearerAuth()
@@ -48,7 +46,7 @@ export class BoardController {
     @Body() createBoardDto: CreateBoardDto,
     @UploadedFile() image: Express.Multer.File,
     @UserId() id: number,
-  ): Promise<UserCreateResultInterface> {
+  ): Promise<BoardResponseDto> {
     this.logger.verbose(`1.[사용자 ${id}가 게시물 생성] 2.[Dto: ${JSON.stringify(createBoardDto)}]`);
     return await this.boardService.createBoard(createBoardDto, id, image);
   }
@@ -67,8 +65,11 @@ export class BoardController {
   @HttpCode(200)
   @ApiOperation({ summary: '게시물 상세 조회 API' })
   @Get('/:id')
-  async getBoard(@Param('id', ParseIntPipe) id: number ): Promise<GetBoardDto> {
-    return await this.boardService.getBoardDetail(id);
+  async getBoard(
+    @Param('id', ParseIntPipe) boardId: number,
+    @UserId() userId: number,
+  ): Promise<BoardResponseDto>{
+    return await this.boardService.getBoardDetail(boardId, userId);
   }
 
   @HttpCode(200)
@@ -78,14 +79,8 @@ export class BoardController {
     @Param('id', ParseIntPipe) boardId: number,
     @UserId() userId: number,
     @Body('status', BoardStatusValidationPipe) status: BoardStatus
-    ): Promise<GetBoardDto>{
+    ): Promise<BoardResponseDto>{
       return await this.boardService.updateBoardStatus(boardId, userId, status);
   }
 
-   @Post('/:boardId/likes')
-  async updateBoardLike(@Body() body: { boardId: number, userId: number }, @Res() res: Response): Promise<void> {
-    const { boardId, userId } = body;
-    const response = await this.boardService.updateBoardLikes(boardId, userId);
-    res.status(HttpStatus.CREATED).json(response);
-  }
 }

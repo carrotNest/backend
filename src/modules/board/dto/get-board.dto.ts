@@ -1,4 +1,3 @@
-import { Region } from "../../region/entity/region.entity";
 import { Board } from "../entity/board.entity";
 import { BoardDto } from "./board.dto";
 
