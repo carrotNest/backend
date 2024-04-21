@@ -6,7 +6,6 @@ import { NicknameAlreadyExistsException } from './authException/Nickname-Already
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { LoginInvalidPasswordException } from './authException/Login-Invalid-Password-Exception';
 import * as bcrypt from 'bcrypt';
-import { UserCreateResultInterface } from '../../interfaces/user-create-result.interface';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UserLoginResultInterface } from 'src/interfaces/user-login-result.interface';
@@ -34,7 +33,7 @@ export class AuthService {
     ) {}
 
 
-    async signup(createUserDto: CreateUserDto): Promise<UserCreateResultInterface> {
+    async signup(createUserDto: CreateUserDto): Promise<number> {
         const parentRegion = await this.regionRepository.findParentRegion(createUserDto.region.parentRegionName);
         if(!parentRegion){
             throw new ParentRegionNotFoundException();
@@ -63,10 +62,7 @@ export class AuthService {
         const newUserEntity = this.userMapper.DtoToEntity(createUserDto, region);
         const savedUser = await this.userRepository.saveUser(newUserEntity);
 
-        return {
-            message: '회원가입 성공',
-            userId: savedUser.id,
-        };
+        return savedUser.id;
     }
     
 

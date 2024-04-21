@@ -3,11 +3,11 @@ import { CommentService } from './comment.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UserId } from '../../decorators/user-id.decorator';
-import { UserCreateResultInterface } from '../../interfaces/user-create-result.interface';
 import { UserJwtAuthGuard } from '../auth/guards/user-jwt.guard';
 import { CommentCursorOptionsDto } from './dto/commet-cursor-options.dto';
 import { PaginationResponseDto } from 'src/global/common/paginate/dto/pagination-response.dto';
 import { Comment } from './entity/comment.entity';
+import { GetCommentDto } from './dto/get-comment.dto';
 
 @ApiTags('comment')
 @UseGuards(UserJwtAuthGuard)
@@ -23,7 +23,7 @@ export class CommentController {
     async createComment(
         @Body() createCommentDto: CreateCommentDto,
         @UserId() id: number,
-    ): Promise<UserCreateResultInterface>{
+    ): Promise<GetCommentDto>{
         this.logger.verbose(`1.[사용자 ${id}가 댓글 생성] 2. [Dto: ${JSON.stringify(createCommentDto)}]`);
         return await this.commentService.createComment(createCommentDto,id);
         
