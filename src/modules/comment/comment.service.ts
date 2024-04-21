@@ -1,26 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '../user/entity/user.entity';
 import { CommentMapper } from './mapper/comment.mapper';
 import { Comment } from './entity/comment.entity';
-import { Board } from '../board/entity/board.entity';
 import { CommentCursorOptionsDto } from './dto/commet-cursor-options.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UserCreateResultInterface } from 'src/interfaces/user-create-result.interface';
 import { PaginationResponseDto } from 'src/global/common/paginate/dto/pagination-response.dto';
 import { CursorPageMetaDto } from 'src/global/common/paginate/dto/cursor-paginate/cursor-page-meta.dto';
+import { CommentRepository } from './repository/comment.repository';
+import { BoardRepository } from '../board/repository/board.repository';
+import { UserRepository } from '../user/repository/user.repository';
 
 @Injectable()
 export class CommentService {
 
     constructor(
-        @InjectRepository(Comment)
-        private readonly commentRepository: Repository<Comment>,
-        @InjectRepository(Board)
-        private readonly boardRepository: Repository<Board>,
-        @InjectRepository(User)
-        private readonly userRepository: Repository<User>,
+        private readonly commentRepository: CommentRepository,
+        private readonly boardRepository: BoardRepository,
+        private readonly userRepository: UserRepository,
 
         private readonly commentMapper: CommentMapper
     ) {}
@@ -30,7 +26,7 @@ export class CommentService {
         const board = await this.boardRepository.findOneBy({id: createCommentDto.boardId});
         const newCommentEntity = this.commentMapper.dtoToEntity(createCommentDto,creator,board);
 
-        const savedComment = await this.commentRepository.save(newCommentEntity);
+        const savedComment = await this.commentRepository.saveComment(newCommentEntity);
 
         return{
             message: '새로운 댓글 생성',
@@ -40,19 +36,8 @@ export class CommentService {
 
     async getAllComment(commentCursorOptionsDto: CommentCursorOptionsDto): Promise<PaginationResponseDto<Comment>> {
         let {boardId, cursor, take} = commentCursorOptionsDto;
-        const querybuilder = this.commentRepository
-            .createQueryBuilder('comment')
-            .innerJoin('comment.creator', 'user')
-            .select(['comment.id', 'comment.content', 'comment.createAt', 'user.nickname'])
-            .where('comment.board.id =:id', {id: boardId})
-            .orderBy('comment.createAt', 'DESC')
-            .limit(take);
 
-            if(cursor){
-                querybuilder.andWhere('comment.id < :cursor' ,{cursor: cursor});
-            }
-
-        const [comments, totalCount] = await querybuilder.getManyAndCount();
+        const [comments, totalCount] = await this.commentRepository.findAllComment(boardId, take, cursor);
 
         const isLastPage = totalCount <= take; 
         let hasNextData = true;

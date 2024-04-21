@@ -1,46 +1,35 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { Likes } from './entity/likes.entity';
-import { Board } from '../board/entity/board.entity';
 import { BoardNotFoundException } from '../board/boardException/Board-Not-Found-Exception';
 import { LikesMapper } from './mapper/likes.mapper';
-import { User } from '../user/entity/user.entity';
 import { UserNotFoundException } from '../auth/authException/User-Not-Found-Exception';
-import { InjectRepository } from '@nestjs/typeorm';
 import { GetBoardDto } from '../board/dto/get-board.dto';
 import { BoardResponseDto } from '../board/dto/board-response.dto';
+import { LikesRepository } from './repository/likes.repository';
+import { BoardRepository } from '../board/repository/board.repository';
+import { UserRepository } from '../user/repository/user.repository';
 
 @Injectable()
 export class LikesService {
     constructor(
-        @InjectRepository(Likes)
-        private readonly likesRepository: Repository<Likes>,
-        @InjectRepository(Board)
-        private readonly boardRepository: Repository<Board>,
-        @InjectRepository(User)
-        private readonly userRepository: Repository<User>,
+        private readonly likesRepository: LikesRepository,
+        private readonly boardRepository: BoardRepository,
+        private readonly userRepository: UserRepository,
 
         private readonly likesMapper: LikesMapper
     ){}
 
-    async updateBoardLikes(boardId: number, userId: number): Promise<BoardResponseDto>{
-
-        const board = await this.boardRepository.findOne({where: {id: boardId}, relations: ['creator', 'region']});
-        
+    async updateBoardLikes(boardId: number, userId: number): Promise<BoardResponseDto> {
+        const board = await this.boardRepository.findBoardById(boardId);
         if(!board){
             throw new BoardNotFoundException();
         }
 
-        const user = await this.userRepository.findOne({where: {id: userId}});
-
+        const user = await this.userRepository.findUserById(userId);
         if(!user){
             throw new UserNotFoundException();
         }
 
-        const isUserLikesExist = await this.likesRepository.findOne({where: {
-            board: {id: boardId},
-            user: {id: userId}
-        }});
+        const isUserLikesExist = await this.likesRepository.isUserPushLikes(boardId, userId);
 
         const userNickname = board.creator.nickname;
         const regionName = board.region.name;
@@ -55,10 +44,10 @@ export class LikesService {
 
         } else{
             const newLikesEntity = this.likesMapper.DtoToEntity(board, user);
-            await this.likesRepository.save(newLikesEntity);
+            await this.likesRepository.saveLikes(newLikesEntity);
 
             board.likesCount++;
-            await this.boardRepository.save(board);
+            await this.boardRepository.saveBoard(board);
         }
 
         const updateBoard = new GetBoardDto(board, userNickname, regionName);

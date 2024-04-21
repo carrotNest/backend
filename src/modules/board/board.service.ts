@@ -1,13 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { Repository } from 'typeorm';
 import { Board } from './entity/board.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from '../user/entity/user.entity';
 import { S3Service } from '../../config/s3/s3.service';
 import { RedisService } from '../../config/redis/redis.service';
 import { BoardMapper } from './mapper/board.mapper';
-import { UserCreateResultInterface } from '../../interfaces/user-create-result.interface';
 import { PageOptionsDto } from '../../global/common/paginate/dto/offset-paginate/page-options.dto';
 import { PaginationResponseDto } from '../../global/common/paginate/dto/pagination-response.dto';
 import { PageMetaDto } from '../../global/common/paginate/dto/offset-paginate/page-meta.dto';
@@ -16,36 +12,30 @@ import { GetBoardDto } from './dto/get-board.dto';
 import { BoardStatus } from '../../types/enums/boardStatus.enum';
 import { BoardNotFoundException } from './boardException/Board-Not-Found-Exception';
 import { BoardStatusForbiddenException } from './boardException/Board-Status-Forbidden-Exception';
-import { Likes } from '../likes/entity/likes.entity';
 import { BoardResponseDto } from './dto/board-response.dto';
+import { BoardRepository } from './repository/board.repository';
+import { UserRepository } from '../user/repository/user.repository';
+import { LikesRepository } from '../likes/repository/likes.repository';
 
 @Injectable()
 export class BoardService {
   constructor(
-    @InjectRepository(Board)
-    private readonly boardRepository: Repository<Board>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(Likes)
-    private readonly likesRepository: Repository<Likes>,
+    private readonly boardRepository: BoardRepository,
+    private readonly userRepository: UserRepository,
+    private readonly likesRepository: LikesRepository,
 
     private readonly boardMapper: BoardMapper,
     private readonly s3Service: S3Service,
     private readonly redisService: RedisService
   ) {}
 
-  async createBoard(
-    createBoardDto: CreateBoardDto,
-    id: number,
-    image: Express.Multer.File,
-  ): Promise<BoardResponseDto> {
-
-    const creator = await this.userRepository.findOne({where: {id: id}, relations: ['region']});
+  async createBoard(createBoardDto: CreateBoardDto, id: number, image: Express.Multer.File): Promise<BoardResponseDto> {
+    const creator = await this.userRepository.findUserRegionById(id);
     const region = creator.region;
     const imageUrl = await this.s3Service.uploadImage(image);
     const newBoardEntity = this.boardMapper.DtoToEntity(creator, imageUrl, region, createBoardDto);
 
-    const savedBoard = await this.boardRepository.save(newBoardEntity);
+    const savedBoard = await this.boardRepository.saveBoard(newBoardEntity);
 
     const userNickname = creator.nickname;
     const regionName = region.name;
@@ -56,24 +46,8 @@ export class BoardService {
     return response;
   }
 
-  async getBoardDetail(boardId: number, userId: number): Promise<BoardResponseDto>{
-    const board = await this.boardRepository
-      .createQueryBuilder('board')
-      .select(['board.id',
-        'board.stuffName',
-        'board.stuffContent', 
-        'board.stuffCategory', 
-        'board.tradingPlace', 
-        'board.status', 
-        'board.likesCount', 
-        'board.imageUrl', 
-        'creator.nickname',
-        'region.name' 
-      ])
-      .innerJoinAndSelect('board.creator', 'creator')
-      .innerJoinAndSelect('board.region', 'region')
-      .where('board.id = :boardId', {boardId})
-      .getOne();
+  async getBoardDetail(boardId: number, userId: number): Promise<BoardResponseDto> {
+    const board = await this.boardRepository.findBoardDetail(boardId);
 
       if(!board){
         throw new BoardNotFoundException();
@@ -81,17 +55,14 @@ export class BoardService {
 
       let isUserPushLikes = true;
 
-      const userLike = await this.likesRepository.findOne({where: {
-        boardId: boardId,
-        userId: userId
-      }});
+      const isUserLikesExist = await this.likesRepository.isUserPushLikes(boardId, userId);
 
       const userNickname = board.creator.nickname;
       const regionName = board.region.name;
 
       const getBoardDto = new GetBoardDto(board, userNickname, regionName);
 
-      if(!userLike){
+      if(!isUserLikesExist){
         isUserPushLikes = false;
       }
 
@@ -100,20 +71,12 @@ export class BoardService {
       return response;
   }
 
-  async getAllBoard(pageOptionsDto: PageOptionsDto, id: number):Promise<PaginationResponseDto<Board>>{
-
-    const user = await this.userRepository.findOne({where: {id: id}, relations: ['region']});
+  async getAllBoard(pageOptionsDto: PageOptionsDto, id: number):Promise<PaginationResponseDto<Board>> {
+    const {take, skip} = pageOptionsDto;
+    const user = await this.userRepository.findUserRegionById(id);
     const userRegionId = user.region.id;
 
-    const [boards, totalCount] = await this.boardRepository
-      .createQueryBuilder('board')
-      .select(['board.id', 'board.stuffName', 'board.status', 'board.imageUrl', 'board.createAt'])
-      .where('board.region_id = :userRegionId', { userRegionId })
-      .andWhere('board.deleteAt IS NULL')
-      .orderBy('board.id', 'DESC')
-      .limit(pageOptionsDto.take)
-      .offset(pageOptionsDto.skip)
-      .getManyAndCount();
+    const [boards, totalCount] = await this.boardRepository.findAllBoard(userRegionId, take, skip);
       
     const pageMetaDto = new PageMetaDto({pageOptionsDto, totalCount});
     const lastPage = pageMetaDto.totalPage;
@@ -125,22 +88,20 @@ export class BoardService {
     } 
   }
 
-  async updateBoardStatus(boardId: number, userId: number, status: BoardStatus):Promise<BoardResponseDto>{
+  async updateBoardStatus(boardId: number, userId: number, status: BoardStatus):Promise<BoardResponseDto> {
 
-    const board = await this.boardRepository.findOne({where: {id: boardId}, relations: ['creator', 'region']});
-
+    const board = await this.boardRepository.findBoardById(boardId);
     if(!board){
       throw new BoardNotFoundException();
     }
     
     const boardCreatorId = board.userId;
-
     if(userId !== boardCreatorId){
       throw new BoardStatusForbiddenException();
     }
 
     board.status = status;
-    await this.boardRepository.save(board);
+    await this.boardRepository.saveBoard(board);
 
     const userNickname = board.creator.nickname;
     const regionName = board.region.name;
@@ -148,12 +109,8 @@ export class BoardService {
 
     let isUserPushLikes = true;
 
-    const userLike = await this.likesRepository.findOne({where: {
-      boardId: boardId,
-      userId: userId
-    }});
-
-    if(!userLike){
+    const isUserLikesExist = await this.likesRepository.isUserPushLikes(boardId, userId);
+    if(!isUserLikesExist){
       isUserPushLikes = false;
     }
 

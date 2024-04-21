@@ -11,9 +11,15 @@ import { MulterModule } from '@nestjs/platform-express';
 import { RedisModule } from '@songkeys/nestjs-redis';
 import { RedisService } from '../../config/redis/redis.service';
 import { Likes } from '../likes/entity/likes.entity';
+import { CustomTypeOrmModule } from 'src/config/mysql/custom-typeorm-module';
+import { BoardRepository } from './repository/board.repository';
+import { UserRepository } from '../user/repository/user.repository';
+import { CommentRepository } from '../comment/repository/comment.repository';
+import { LikesRepository } from '../likes/repository/likes.repository';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Board, User, Comment, Likes]),
+    CustomTypeOrmModule.forCustomRepository([BoardRepository, UserRepository, CommentRepository, LikesRepository]),
     S3Module,
     RedisModule,
     MulterModule.register(),
