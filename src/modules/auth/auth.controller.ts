@@ -23,8 +23,12 @@ export class AuthController {
     @Post('/signup')
     async registerUser(
         @Body() createUserDto: CreateUserDto
-    ): Promise<UserCreateResultInterface> {
-        return await this.authService.signup(createUserDto);
+    ): Promise<UserCreateResultInterface>{
+        const response = await this.authService.signup(createUserDto);
+        return {
+            message: '회원가입 성공',
+            userId: response
+        };
     }
 
     @UseGuards(UserLocalAuthGuard)
