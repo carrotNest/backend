@@ -1,7 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from '../user/entity/user.entity';
-import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserMapper } from './mapper/user.mapper';
 import { AccountIdAlreadyExistsException } from './authException/AccountId-Already-Exists-Exception';
@@ -12,7 +9,6 @@ import * as bcrypt from 'bcrypt';
 import { UserCreateResultInterface } from '../../interfaces/user-create-result.interface';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { Region } from '../region/entity/region.entity';
 import { UserLoginResultInterface } from 'src/interfaces/user-login-result.interface';
 import { UserNotFoundException } from './authException/User-Not-Found-Exception';
 import { ParentRegionNotFoundException } from './authException/ParentRegion-Not-Found-Exception';
@@ -21,15 +17,15 @@ import { RefreshTokenService } from '../../config/redis/refresh-token.service';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RefreshTokenInvalidException } from './authException/RefreshToken-Invalid-Exception';
 import { RefreshTokenExpiredException } from './authException/RefreshToken-Expired-Exception';
+import { UserRepository } from '../user/repository/user.repository';
+import { RegionRepository } from '../region/repository/region.repository';
 
 @Injectable()
 export class AuthService {
 
     constructor(
-        @InjectRepository(User)
-        private readonly userRepository: Repository<User>,
-        @InjectRepository(Region)
-        private readonly regionRepository: Repository<Region>,
+        private readonly userRepository: UserRepository,
+        private readonly regionRepository: RegionRepository,
 
         private readonly jwtService: JwtService,
         readonly configService: ConfigService,
@@ -38,27 +34,23 @@ export class AuthService {
     ) {}
 
 
-    async signup(createUserDto: CreateUserDto): Promise<UserCreateResultInterface>{
-
-        const parentRegion = await this.regionRepository.findOne({where: {name: createUserDto.region.parentRegionName}});
+    async signup(createUserDto: CreateUserDto): Promise<UserCreateResultInterface> {
+        const parentRegion = await this.regionRepository.findParentRegion(createUserDto.region.parentRegionName);
         if(!parentRegion){
             throw new ParentRegionNotFoundException();
         }
 
-        const region = await this.regionRepository.findOne({where: {
-            name: createUserDto.region.RegionName,
-            parent: parentRegion
-        }});
+        const region = await this.regionRepository.findRegion(createUserDto.region.RegionName, parentRegion);
         if(!region){
             throw new RegionNotFoundException();
         }
         
-        const isAccountIDExist = await this.userRepository.findOne({where: {accountId:createUserDto.accountId}});
+        const isAccountIDExist = await this.userRepository.isAccountIDExist(createUserDto.accountId);
         if(isAccountIDExist) {
           throw new AccountIdAlreadyExistsException();
         }
 
-        const isNicknameExist = await this.userRepository.findOne({where: {nickname: createUserDto.nickname}});
+        const isNicknameExist = await this.userRepository.isNicknameExist(createUserDto.nickname);
         if(isNicknameExist) {
             throw new NicknameAlreadyExistsException();
         }
@@ -68,8 +60,8 @@ export class AuthService {
         const hashedPassword = await bcrypt.hash(password, salt);
         createUserDto.password = hashedPassword;
 
-        const newUserEntity = this.userMapper.DtoToEntity(createUserDto,region);
-        const savedUser = await this.userRepository.save(newUserEntity);
+        const newUserEntity = this.userMapper.DtoToEntity(createUserDto, region);
+        const savedUser = await this.userRepository.saveUser(newUserEntity);
 
         return {
             message: '회원가입 성공',
@@ -78,9 +70,10 @@ export class AuthService {
     }
     
 
-    async validateUser(authCredentialsDto: AuthCredentialsDto): Promise<{id: number}>{
+    async validateUser(authCredentialsDto: AuthCredentialsDto): Promise<{id: number}> {
         const {accountId, password} = authCredentialsDto;
-        const user = await this.userRepository.findOneBy({accountId});
+        const user = await this.userRepository.findUserByAccountId(accountId);
+
         if(user){
             const isPasswordMatch = await bcrypt.compare(password, user.password);
             if(isPasswordMatch){
@@ -91,7 +84,6 @@ export class AuthService {
         }else{
             throw new UserNotFoundException();
         }
-
     }
 
     async loginUser(id: number): Promise<UserLoginResultInterface> {
@@ -109,8 +101,8 @@ export class AuthService {
         const expiresIn = this.configService.get('JWT_REFRESH_EXPIRATION_TTL');
         await this.refreshTokenService.setKey(`refreshToken:${id}`, refreshToken, expiresIn);
 
-        const user = await this.userRepository.findOne({where: {id: id}, relations: ['region']});
-        const userRegionName = user.region.name;
+        const userRegion = await this.userRepository.findUserRegionById(id);
+        const userRegionName = userRegion.region.name;
     
         return {
             accessToken: accessToken,
@@ -119,7 +111,7 @@ export class AuthService {
         };
     }
 
-    async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<{newAccessToken: string}>{
+    async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<{newAccessToken: string}> {
         const {refreshToken} = refreshTokenDto;
 
         const payload = this.jwtService.verify(refreshToken, {
